@@ -1,11 +1,11 @@
 /**
  * Yii2 Gallery Lightbox
- * Pure Vanilla CSS with Glassmorphism, Dark/Light theme support, and Smooth Animations
+ * Pure Vanilla CSS with Deep Cinema Canvas, Dark/Light theme support, and Smooth Animations
  * Author: LarikMC
  */
 
 :root {
-    --pl-lb-bg: rgba(10, 14, 26, 0.92);
+    --pl-lb-bg: #090d16;
     --pl-lb-text: #ffffff;
     --pl-lb-muted: #94a3b8;
     --pl-lb-accent: #6366f1;
@@ -18,21 +18,21 @@
     --pl-lb-arrow-size: 48px;
     --pl-lb-arrow-radius: 50%;
     --pl-lb-arrow-color: #ffffff;
-    --pl-lb-arrow-bg: rgba(15, 23, 42, 0.6);
+    --pl-lb-arrow-bg: rgba(255, 255, 255, 0.08);
     --pl-lb-arrow-border: rgba(255, 255, 255, 0.15);
     --pl-lb-arrow-hover-bg: var(--pl-lb-accent, #6366f1);
     --pl-lb-arrow-hover-color: #ffffff;
     --pl-lb-arrow-hover-border: transparent;
-    --pl-lb-arrow-hover-glow: var(--pl-lb-accent-glow, rgba(99, 102, 241, 0.4));
+    --pl-lb-arrow-hover-glow: var(--pl-lb-accent-glow, rgba(99, 102, 241, 0.45));
 }
 
 [data-bs-theme="light"] {
-    --pl-lb-bg: rgba(15, 23, 42, 0.94);
+    --pl-lb-bg: #0c101c;
     --pl-lb-text: #ffffff;
     --pl-lb-muted: #cbd5e1;
 }
 
-/* Backdrop */
+/* Backdrop - Deep solid cinema canvas without distracting blurred page ghosts */
 .pl-lightbox-backdrop {
     position: fixed;
     inset: 0;
@@ -41,11 +41,9 @@
     align-items: center;
     justify-content: center;
     background: var(--pl-lb-bg);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
     opacity: 0;
     visibility: hidden;
-    transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.25s;
+    transition: opacity 0.22s ease-out, visibility 0.22s;
     user-select: none;
     -webkit-user-select: none;
 }
@@ -66,9 +64,10 @@
     box-sizing: border-box;
     position: relative;
     overflow: hidden;
+    background: transparent !important;
 }
 
-/* Toolbar */
+/* Toolbar - Clean and free from artificial gradient bands */
 .pl-lightbox-toolbar {
     display: flex;
     align-items: center;
@@ -76,6 +75,8 @@
     height: 52px;
     z-index: 10;
     gap: 16px;
+    background: transparent !important;
+    background-image: none !important;
 }
 
 .pl-lightbox-info {
@@ -150,6 +151,8 @@
     justify-content: center;
     min-height: 0;
     width: 100%;
+    background: transparent !important;
+    background-image: none !important;
 }
 
 .pl-lightbox-image-wrap {
@@ -159,14 +162,18 @@
     align-items: center;
     justify-content: center;
     position: relative;
+    background: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
 }
 
+/* Image - Clean subtle shadow, no heavy artificial dark vignette */
 .pl-lightbox-img {
     max-width: 90vw;
     max-height: calc(100vh - 180px);
     object-fit: contain;
-    border-radius: 10px;
-    box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.6);
+    border-radius: 8px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
     opacity: 0;
     transform: scale(0.97);
     transition: opacity 0.22s ease-out, transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
@@ -186,7 +193,7 @@
     width: var(--pl-lb-arrow-size, 48px);
     height: var(--pl-lb-arrow-size, 48px);
     border-radius: var(--pl-lb-arrow-radius, 50%);
-    background: var(--pl-lb-arrow-bg, rgba(15, 23, 42, 0.6));
+    background: var(--pl-lb-arrow-bg, rgba(255, 255, 255, 0.08));
     border: 1px solid var(--pl-lb-arrow-border, rgba(255, 255, 255, 0.15));
     color: var(--pl-lb-arrow-color, #ffffff);
     display: flex;
@@ -196,8 +203,6 @@
     z-index: 5;
     transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     outline: none;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
     padding: 0;
 }
 
@@ -231,6 +236,8 @@
     pointer-events: none;
     z-index: 3;
     color: var(--pl-lb-accent, #6366f1);
+    background: transparent !important;
+    box-shadow: none !important;
 }
 
 /* Variant 1: Circle Ring */
@@ -299,7 +306,7 @@
     }
 }
 
-/* Bottom Thumbnail Strip */
+/* Bottom Thumbnail Strip - Clean, no bottom gradient banner */
 .pl-lightbox-strip-wrapper {
     height: 76px;
     display: flex;
@@ -308,6 +315,8 @@
     width: 100%;
     z-index: 10;
     overflow: hidden;
+    background: transparent !important;
+    background-image: none !important;
 }
 
 .pl-lightbox-strip {

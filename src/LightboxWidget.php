@@ -19,6 +19,7 @@ use yii\helpers\Json;
  *     ],
  *     'title' => 'Gallery Title',
  *     'loaderType' => 'arrows', // 'circle', 'arrows', 'dots', 'none'
+ *     'preloadCount' => 3,     // Preload 3 adjacent images in background
  *     'arrowOptions' => [
  *         'hoverBg' => '#6366f1',
  *         'hoverColor' => '#ffffff',
@@ -71,6 +72,16 @@ class LightboxWidget extends Widget
     public ?string $accentColor = null;
 
     /**
+     * @var int Number of adjacent images to prefetch ahead in background (default: 3)
+     */
+    public int $preloadCount = 3;
+
+    /**
+     * @var int Number of adjacent images to prefetch backwards in background (default: 1)
+     */
+    public int $preloadPrev = 1;
+
+    /**
      * @var array Configuration options for navigation arrows:
      * - 'color': default icon color
      * - 'hoverColor': icon color on hover
@@ -100,6 +111,8 @@ class LightboxWidget extends Widget
         'closeOnBackdrop' => true,
         'loop' => true,
         'showThumbStrip' => true,
+        'preloadCount' => 3,
+        'preloadPrev' => 1,
     ];
 
     /**
@@ -130,6 +143,17 @@ class LightboxWidget extends Widget
             'nextIcon' => null,
             'class' => '',
         ], $this->arrowOptions);
+
+        // Merge client options
+        $this->clientOptions = array_merge([
+            'enableKeyboard' => true,
+            'enableTouchSwipe' => true,
+            'closeOnBackdrop' => true,
+            'loop' => true,
+            'showThumbStrip' => true,
+            'preloadCount' => $this->preloadCount,
+            'preloadPrev' => $this->preloadPrev,
+        ], $this->clientOptions);
     }
 
     /**

@@ -1,19 +1,20 @@
 # Yii2 Gallery Lightbox
 
-[![Latest Stable Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](https://github.com/larikmc/yii2-gallery-lightbox)
+[![Latest Stable Version](https://img.shields.io/badge/version-1.2.0-blue.svg)](https://github.com/larikmc/yii2-gallery-lightbox)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE.md)
 [![PHP](https://img.shields.io/badge/PHP-7.4%2B%20%7C%208.x-purple.svg)](https://php.net)
 
 A high-performance, modern, zero-dependency Vanilla JS gallery lightbox and fullscreen image viewer for Yii2 applications.
 
-Designed with glassmorphism aesthetics, smooth animations, touch/swipe gestures, thumbnail strip navigation, customizable navigation arrows, and selectable preloader spinners.
+Designed with glassmorphism aesthetics, intelligent background image prefetching, smooth animations, touch/swipe gestures, thumbnail strip navigation, customizable navigation arrows, and selectable preloader spinners.
 
 ---
 
 ## ✨ Features
 
 - **Zero Dependencies:** Pure Vanilla JavaScript (0 KB jQuery, no third-party lightbox libraries).
-- **Glassmorphism Design:** Modern backdrop blur and dark/light theme aware styles.
+- **Background Prefetching (Instant Image Flipping):** Automatically preloads adjacent images in the background (default: 3 ahead, 1 behind) so flipping slides feels instantaneous even on slower CDNs or large 4K screenshots.
+- **Glassmorphism & Clean Canvas:** Smooth, uniform dark backdrop with no artificial gradient banding or heavy edge vignettes.
 - **Selectable Loaders / Spinners:** Choose between rotating dual arrows (`arrows`), sleek neon ring (`circle`), pulsing dots (`dots`), or your own custom HTML.
 - **Customizable Arrows:** Change arrow hover background, icon color, button size, shape (`circle`, `rounded`, `square`), borders, or provide custom SVG icons.
 - **CSS Variables Architecture:** Every color, size, and effect can be adjusted via PHP widget properties or CSS variables.
@@ -31,7 +32,7 @@ Add repository and package to your `composer.json`:
 
 ```json
 "require": {
-    "larikmc/yii2-gallery-lightbox": "^1.1"
+    "larikmc/yii2-gallery-lightbox": "^1.2"
 }
 ```
 
@@ -78,6 +79,7 @@ Render the lightbox container once in your view:
     'id' => 'gameLightbox',
     'title' => $game->title,
     'items' => $screenshots,
+    'preloadCount' => 3, // Preload 3 adjacent images in background
 ]) ?>
 ```
 
@@ -92,6 +94,25 @@ Trigger it from any HTML element with `data-gallery-lightbox`:
 <!-- Or trigger via any image -->
 <img src="thumb.jpg" data-gallery-lightbox="gameLightbox" data-index="3" alt="Frame">
 ```
+
+---
+
+## ⚡ Background Prefetching (Adjacent Preload)
+
+When browsing remote images (e.g. TMDB, Steam, or cloud storage), waiting for each high-resolution image to download can cause noticeable delays.
+
+The lightbox includes built-in background prefetching that starts buffering the next images as soon as a slide is opened:
+
+```php
+<?= \larikmc\lightbox\LightboxWidget::widget([
+    'id' => 'fastGallery',
+    'items' => $items,
+    'preloadCount' => 3, // Prefetch next 3 full-size images in background
+    'preloadPrev' => 1,  // Prefetch previous 1 full-size image in background
+]) ?>
+```
+
+When the user clicks **Next** or **Previous**, the high-res image is already stored in browser memory, resulting in instant transitions without spinner delay.
 
 ---
 
@@ -200,6 +221,7 @@ All components are styled using CSS Custom Properties. You can override them glo
 ```css
 /* Custom theme for gallery */
 #myMovieGallery {
+    --pl-lb-bg: rgba(10, 14, 26, 0.96);   /* Solid or glass backdrop */
     --pl-lb-accent: #f43f5e;              /* Accent color (rose) */
     --pl-lb-accent-glow: rgba(244, 63, 94, 0.4);
     --pl-lb-arrow-size: 52px;             /* Larger buttons */
@@ -209,20 +231,6 @@ All components are styled using CSS Custom Properties. You can override them glo
     --pl-lb-arrow-hover-color: #ffffff;
 }
 ```
-
-| CSS Variable | Default | Description |
-|---|---|---|
-| `--pl-lb-bg` | `rgba(10, 14, 26, 0.92)` | Fullscreen backdrop overlay background. |
-| `--pl-lb-accent` | `#6366f1` | Primary accent color (indigo). |
-| `--pl-lb-accent-glow` | `rgba(99, 102, 241, 0.4)` | Box-shadow glow for active elements. |
-| `--pl-lb-arrow-size` | `48px` | Arrow button width & height. |
-| `--pl-lb-arrow-radius` | `50%` | Arrow button border radius. |
-| `--pl-lb-arrow-color` | `#ffffff` | Arrow icon color. |
-| `--pl-lb-arrow-hover-color` | `#ffffff` | Arrow icon color on hover. |
-| `--pl-lb-arrow-bg` | `rgba(15, 23, 42, 0.6)` | Arrow button background. |
-| `--pl-lb-arrow-hover-bg` | `var(--pl-lb-accent)` | Arrow button background on hover. |
-| `--pl-lb-arrow-border` | `rgba(255, 255, 255, 0.15)`| Arrow button border. |
-| `--pl-lb-arrow-hover-border`| `transparent` | Arrow button border on hover. |
 
 ---
 
@@ -239,19 +247,9 @@ All components are styled using CSS Custom Properties. You can override them glo
 | `loaderHtml` | `string\|null`| `null` | Custom HTML markup for the preloader. |
 | `accentColor`| `string\|null`| `null` | Custom accent HEX color (e.g. `'#6366f1'`). |
 | `arrowOptions`| `array` | `[]` | Navigation arrow configuration array. |
-| `clientOptions` | `array` | `[...]` | Client options passed to JavaScript (see below). |
-
-### Client Options
-
-```php
-'clientOptions' => [
-    'enableKeyboard' => true,    // Arrow Left / Right and Esc
-    'enableTouchSwipe' => true,  // Touch swipes on mobile
-    'closeOnBackdrop' => true,   // Click on backdrop closes modal
-    'loop' => true,              // Wrap around at first/last slide
-    'showThumbStrip' => true,    // Display bottom thumbnail strip
-]
-```
+| `preloadCount`| `int` | `3` | Number of adjacent images to prefetch ahead in background. |
+| `preloadPrev` | `int` | `1` | Number of adjacent images to prefetch behind in background. |
+| `clientOptions`| `array` | `[...]` | Client options passed to JavaScript. |
 
 ---
 
@@ -267,7 +265,7 @@ GalleryLightbox.open('gameLightbox', 0);
 GalleryLightbox.open('gameLightbox', 0, [
     { thumbnail: 'https://.../t1.jpg', full: 'https://.../f1.jpg' },
     { thumbnail: 'https://.../t2.jpg', full: 'https://.../f2.jpg' }
-], 'Baldur\'s Gate 3');
+], 'The Matrix (1999)');
 
 // Navigation controls:
 GalleryLightbox.next('gameLightbox');
