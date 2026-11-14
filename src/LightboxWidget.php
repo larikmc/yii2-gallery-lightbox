@@ -18,6 +18,12 @@ use yii\helpers\Json;
  *         ['thumbnail' => '/img/thumb2.jpg', 'full' => '/img/full2.jpg', 'title' => 'Screenshot 2'],
  *     ],
  *     'title' => 'Gallery Title',
+ *     'loaderType' => 'arrows', // 'circle', 'arrows', 'dots', 'none'
+ *     'arrowOptions' => [
+ *         'hoverBg' => '#6366f1',
+ *         'hoverColor' => '#ffffff',
+ *         'size' => 48,
+ *     ],
  * ]) ?>
  * ```
  */
@@ -50,6 +56,37 @@ class LightboxWidget extends Widget
     public string $gridClass = 'pl-lightbox-grid';
 
     /**
+     * @var string Preloader spinner type: 'circle', 'arrows', 'dots', 'none'
+     */
+    public string $loaderType = 'circle';
+
+    /**
+     * @var string|null Custom HTML for the loader spinner (overrides $loaderType)
+     */
+    public ?string $loaderHtml = null;
+
+    /**
+     * @var string|null Accent color (e.g. '#6366f1', '#a855f7') for active border and highlights
+     */
+    public ?string $accentColor = null;
+
+    /**
+     * @var array Configuration options for navigation arrows:
+     * - 'color': default icon color
+     * - 'hoverColor': icon color on hover
+     * - 'bg': button background color
+     * - 'hoverBg': button background on hover
+     * - 'borderColor': border color
+     * - 'hoverBorderColor': border color on hover
+     * - 'size': diameter in px (e.g. 48)
+     * - 'shape': 'circle' (default), 'rounded' (border-radius 10px), 'square'
+     * - 'prevIcon': custom HTML/SVG for previous arrow
+     * - 'nextIcon': custom HTML/SVG for next arrow
+     * - 'class': additional CSS classes for arrow buttons
+     */
+    public array $arrowOptions = [];
+
+    /**
      * @var array Custom HTML attributes for the modal backdrop
      */
     public array $options = [];
@@ -78,6 +115,21 @@ class LightboxWidget extends Widget
 
         // Normalize items array
         $this->items = $this->normalizeItems($this->items);
+
+        // Normalize arrowOptions
+        $this->arrowOptions = array_merge([
+            'color' => null,
+            'hoverColor' => null,
+            'bg' => null,
+            'hoverBg' => null,
+            'borderColor' => null,
+            'hoverBorderColor' => null,
+            'size' => null,
+            'shape' => 'circle',
+            'prevIcon' => null,
+            'nextIcon' => null,
+            'class' => '',
+        ], $this->arrowOptions);
     }
 
     /**
@@ -94,6 +146,14 @@ class LightboxWidget extends Widget
         $js = "if (window.GalleryLightbox) { window.GalleryLightbox.initModal('{$this->id}', {$clientOptionsJson}); }";
         $view->registerJs($js);
 
+        // Build scoped CSS variables for colors, arrows, and accent
+        $cssVars = $this->buildScopedCssVars();
+        $options = $this->options;
+        if (!empty($cssVars)) {
+            $existingStyle = $options['style'] ?? '';
+            $options['style'] = implode('; ', $cssVars) . '; ' . $existingStyle;
+        }
+
         return $this->render('@larikmc/lightbox/views/lightbox', [
             'id' => $this->id,
             'title' => $this->title,
@@ -101,9 +161,85 @@ class LightboxWidget extends Widget
             'itemsJson' => $itemsJson,
             'renderGrid' => $this->renderGrid,
             'gridClass' => $this->gridClass,
-            'options' => $this->options,
+            'loaderType' => $this->loaderType,
+            'loaderHtml' => $this->loaderHtml,
+            'accentColor' => $this->accentColor,
+            'arrowOptions' => $this->arrowOptions,
+            'options' => $options,
             'clientOptions' => $this->clientOptions,
         ]);
+    }
+
+    /**
+     * Builds scoped CSS variables from widget configuration.
+     *
+     * @return array
+     */
+    protected function buildScopedCssVars(): array
+    {
+        $vars = [];
+
+        if (!empty($this->accentColor)) {
+            $vars[] = '--pl-lb-accent: ' . $this->accentColor;
+            $vars[] = '--pl-lb-accent-glow: ' . $this->colorToRgbaGlow($this->accentColor);
+        }
+
+        if (!empty($this->arrowOptions['color'])) {
+            $vars[] = '--pl-lb-arrow-color: ' . $this->arrowOptions['color'];
+        }
+        if (!empty($this->arrowOptions['hoverColor'])) {
+            $vars[] = '--pl-lb-arrow-hover-color: ' . $this->arrowOptions['hoverColor'];
+        }
+        if (!empty($this->arrowOptions['bg'])) {
+            $vars[] = '--pl-lb-arrow-bg: ' . $this->arrowOptions['bg'];
+        }
+        if (!empty($this->arrowOptions['hoverBg'])) {
+            $vars[] = '--pl-lb-arrow-hover-bg: ' . $this->arrowOptions['hoverBg'];
+        }
+        if (!empty($this->arrowOptions['borderColor'])) {
+            $vars[] = '--pl-lb-arrow-border: ' . $this->arrowOptions['borderColor'];
+        }
+        if (!empty($this->arrowOptions['hoverBorderColor'])) {
+            $vars[] = '--pl-lb-arrow-hover-border: ' . $this->arrowOptions['hoverBorderColor'];
+        }
+        if (!empty($this->arrowOptions['size'])) {
+            $size = is_numeric($this->arrowOptions['size']) ? $this->arrowOptions['size'] . 'px' : $this->arrowOptions['size'];
+            $vars[] = '--pl-lb-arrow-size: ' . $size;
+        }
+        if (!empty($this->arrowOptions['shape'])) {
+            $radius = match ($this->arrowOptions['shape']) {
+                'square' => '0px',
+                'rounded' => '10px',
+                default => '50%',
+            };
+            $vars[] = '--pl-lb-arrow-radius: ' . $radius;
+        }
+
+        return $vars;
+    }
+
+    /**
+     * Converts a HEX color to an RGBA glow string.
+     *
+     * @param string $color
+     * @param float $alpha
+     * @return string
+     */
+    protected function colorToRgbaGlow(string $color, float $alpha = 0.4): string
+    {
+        $hex = ltrim($color, '#');
+        if (strlen($hex) === 3) {
+            $r = hexdec(str_repeat(substr($hex, 0, 1), 2));
+            $g = hexdec(str_repeat(substr($hex, 1, 1), 2));
+            $b = hexdec(str_repeat(substr($hex, 2, 1), 2));
+            return "rgba({$r}, {$g}, {$b}, {$alpha})";
+        } elseif (strlen($hex) === 6) {
+            $r = hexdec(substr($hex, 0, 2));
+            $g = hexdec(substr($hex, 2, 2));
+            $b = hexdec(substr($hex, 4, 2));
+            return "rgba({$r}, {$g}, {$b}, {$alpha})";
+        }
+        return 'rgba(99, 102, 241, 0.4)';
     }
 
     /**
