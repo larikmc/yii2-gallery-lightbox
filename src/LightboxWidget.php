@@ -18,12 +18,13 @@ use yii\helpers\Json;
  *         ['thumbnail' => '/img/thumb2.jpg', 'full' => '/img/full2.jpg', 'title' => 'Screenshot 2'],
  *     ],
  *     'title' => 'Gallery Title',
- *     'loaderType' => 'arrows', // 'circle', 'arrows', 'dots', 'none'
- *     'preloadCount' => 3,     // Preload 3 adjacent images in background
+ *     'loaderType' => 'arrows', // 'arrows', 'circle', 'dual-ring', 'pulse', 'dots', 'bars', 'none'
+ *     'loaderColor' => '#8b5cf6', // Optional custom color (defaults to button hoverBg / accentColor)
  *     'arrowOptions' => [
- *         'hoverBg' => '#6366f1',
+ *         'hoverBg' => '#8b5cf6',
  *         'hoverColor' => '#ffffff',
- *         'size' => 48,
+ *         'iconType' => 'chevron', // 'chevron', 'arrow', 'caret'
+ *         'size' => 50,
  *     ],
  * ]) ?>
  * ```
@@ -57,14 +58,27 @@ class LightboxWidget extends Widget
     public string $gridClass = 'pl-lightbox-grid';
 
     /**
-     * @var string Preloader spinner type: 'circle', 'arrows', 'dots', 'none'
+     * @var string Preloader spinner type:
+     * - 'arrows': frosted glass circle with rotating double-arrows (original game style)
+     * - 'circle': glowing circular neon ring
+     * - 'dual-ring': dual counter-rotating orbital rings
+     * - 'pulse': radar wave pulse with glowing core
+     * - 'dots': three wave-pulsing glowing dots
+     * - 'bars': rhythmic equalizer bars
+     * - 'none': disables loader
      */
-    public string $loaderType = 'circle';
+    public string $loaderType = 'arrows';
 
     /**
      * @var string|null Custom HTML for the loader spinner (overrides $loaderType)
      */
     public ?string $loaderHtml = null;
+
+    /**
+     * @var string|null Custom color for the loader spinner (e.g. '#8b5cf6').
+     * If null, automatically synchronizes with $arrowOptions['hoverBg'] or $accentColor.
+     */
+    public ?string $loaderColor = null;
 
     /**
      * @var string|null Accent color (e.g. '#6366f1', '#a855f7') for active border and highlights
@@ -86,11 +100,12 @@ class LightboxWidget extends Widget
      * - 'color': default icon color
      * - 'hoverColor': icon color on hover
      * - 'bg': button background color
-     * - 'hoverBg': button background on hover
+     * - 'hoverBg': button background on hover (also syncs with loader)
      * - 'borderColor': border color
      * - 'hoverBorderColor': border color on hover
      * - 'size': diameter in px (e.g. 48)
      * - 'shape': 'circle' (default), 'rounded' (border-radius 10px), 'square'
+     * - 'iconType': 'chevron' (default), 'arrow' (classic with stem), 'caret' (triangle)
      * - 'prevIcon': custom HTML/SVG for previous arrow
      * - 'nextIcon': custom HTML/SVG for next arrow
      * - 'class': additional CSS classes for arrow buttons
@@ -139,6 +154,7 @@ class LightboxWidget extends Widget
             'hoverBorderColor' => null,
             'size' => null,
             'shape' => 'circle',
+            'iconType' => 'chevron',
             'prevIcon' => null,
             'nextIcon' => null,
             'class' => '',
@@ -170,7 +186,7 @@ class LightboxWidget extends Widget
         $js = "if (window.GalleryLightbox) { window.GalleryLightbox.initModal('{$this->id}', {$clientOptionsJson}); }";
         $view->registerJs($js);
 
-        // Build scoped CSS variables for colors, arrows, and accent
+        // Build scoped CSS variables for colors, arrows, accent, and loader
         $cssVars = $this->buildScopedCssVars();
         $options = $this->options;
         if (!empty($cssVars)) {
@@ -187,6 +203,7 @@ class LightboxWidget extends Widget
             'gridClass' => $this->gridClass,
             'loaderType' => $this->loaderType,
             'loaderHtml' => $this->loaderHtml,
+            'loaderColor' => $this->loaderColor,
             'accentColor' => $this->accentColor,
             'arrowOptions' => $this->arrowOptions,
             'options' => $options,
@@ -203,11 +220,14 @@ class LightboxWidget extends Widget
     {
         $vars = [];
 
-        if (!empty($this->accentColor)) {
-            $vars[] = '--pl-lb-accent: ' . $this->accentColor;
-            $vars[] = '--pl-lb-accent-glow: ' . $this->colorToRgbaGlow($this->accentColor);
+        // Determine effective accent color
+        $effectiveAccent = $this->accentColor ?: ($this->arrowOptions['hoverBg'] ?: null);
+        if (!empty($effectiveAccent) && strpos($effectiveAccent, 'var(') === false) {
+            $vars[] = '--pl-lb-accent: ' . $effectiveAccent;
+            $vars[] = '--pl-lb-accent-glow: ' . $this->colorToRgbaGlow($effectiveAccent);
         }
 
+        // Arrow options
         if (!empty($this->arrowOptions['color'])) {
             $vars[] = '--pl-lb-arrow-color: ' . $this->arrowOptions['color'];
         }
@@ -219,6 +239,9 @@ class LightboxWidget extends Widget
         }
         if (!empty($this->arrowOptions['hoverBg'])) {
             $vars[] = '--pl-lb-arrow-hover-bg: ' . $this->arrowOptions['hoverBg'];
+            if (strpos($this->arrowOptions['hoverBg'], 'var(') === false) {
+                $vars[] = '--pl-lb-arrow-hover-glow: ' . $this->colorToRgbaGlow($this->arrowOptions['hoverBg'], 0.5);
+            }
         }
         if (!empty($this->arrowOptions['borderColor'])) {
             $vars[] = '--pl-lb-arrow-border: ' . $this->arrowOptions['borderColor'];
@@ -239,6 +262,15 @@ class LightboxWidget extends Widget
             $vars[] = '--pl-lb-arrow-radius: ' . $radius;
         }
 
+        // Loader color synchronization with buttons
+        $effectiveLoaderColor = $this->loaderColor ?: ($this->arrowOptions['hoverBg'] ?: ($this->accentColor ?: null));
+        if (!empty($effectiveLoaderColor)) {
+            $vars[] = '--pl-lb-loader-color: ' . $effectiveLoaderColor;
+            if (strpos($effectiveLoaderColor, 'var(') === false) {
+                $vars[] = '--pl-lb-loader-glow: ' . $this->colorToRgbaGlow($effectiveLoaderColor, 0.5);
+            }
+        }
+
         return $vars;
     }
 
@@ -249,7 +281,7 @@ class LightboxWidget extends Widget
      * @param float $alpha
      * @return string
      */
-    protected function colorToRgbaGlow(string $color, float $alpha = 0.4): string
+    protected function colorToRgbaGlow(string $color, float $alpha = 0.45): string
     {
         $hex = ltrim($color, '#');
         if (strlen($hex) === 3) {
@@ -263,7 +295,7 @@ class LightboxWidget extends Widget
             $b = hexdec(substr($hex, 4, 2));
             return "rgba({$r}, {$g}, {$b}, {$alpha})";
         }
-        return 'rgba(99, 102, 241, 0.4)';
+        return "rgba(99, 102, 241, {$alpha})";
     }
 
     /**

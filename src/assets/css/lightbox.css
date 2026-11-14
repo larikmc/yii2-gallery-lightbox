@@ -9,7 +9,7 @@
     --pl-lb-text: #ffffff;
     --pl-lb-muted: #94a3b8;
     --pl-lb-accent: #6366f1;
-    --pl-lb-accent-glow: rgba(99, 102, 241, 0.4);
+    --pl-lb-accent-glow: rgba(99, 102, 241, 0.45);
     --pl-lb-btn-bg: rgba(255, 255, 255, 0.1);
     --pl-lb-btn-hover: rgba(255, 255, 255, 0.2);
     --pl-lb-thumb-border: rgba(255, 255, 255, 0.2);
@@ -24,6 +24,10 @@
     --pl-lb-arrow-hover-color: #ffffff;
     --pl-lb-arrow-hover-border: transparent;
     --pl-lb-arrow-hover-glow: var(--pl-lb-accent-glow, rgba(99, 102, 241, 0.45));
+
+    /* Loader color synchronized with button hover color by default */
+    --pl-lb-loader-color: var(--pl-lb-arrow-hover-bg, var(--pl-lb-accent, #6366f1));
+    --pl-lb-loader-glow: var(--pl-lb-arrow-hover-glow, var(--pl-lb-accent-glow, rgba(99, 102, 241, 0.45)));
 }
 
 [data-bs-theme="light"] {
@@ -226,7 +230,9 @@
     right: 12px;
 }
 
-/* Preloader Loaders */
+/* ==========================================================================
+   Preloader Loaders (Customizable with synchronized button/accent colors)
+   ========================================================================== */
 .pl-lightbox-loader {
     position: absolute;
     inset: 0;
@@ -234,38 +240,133 @@
     align-items: center;
     justify-content: center;
     pointer-events: none;
-    z-index: 3;
-    color: var(--pl-lb-accent, #6366f1);
+    z-index: 30;
+    color: var(--pl-lb-loader-color, var(--pl-lb-arrow-hover-bg, var(--pl-lb-accent, #6366f1)));
     background: transparent !important;
     box-shadow: none !important;
 }
 
-/* Variant 1: Circle Ring */
-.pl-lightbox-spinner.pl-spinner-circle,
-.pl-lightbox-spinner {
-    width: 44px;
-    height: 44px;
-    border: 3px solid rgba(255, 255, 255, 0.15);
-    border-top-color: var(--pl-lb-accent, #6366f1);
+/* Variant 1: Original Wheel with Rotating Arrows */
+.pl-lightbox-loader-wheel {
+    width: 72px;
+    height: 72px;
     border-radius: 50%;
-    animation: plLbSpin 0.8s linear infinite;
-    box-sizing: border-box;
-}
-
-/* Variant 2: Rotating Dual Arrows */
-.pl-lightbox-spinner-arrows {
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 10px 32px rgba(0, 0, 0, 0.65), 0 0 20px var(--pl-lb-loader-glow, var(--pl-lb-accent-glow, rgba(99, 102, 241, 0.35)));
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--pl-lb-accent, #6366f1);
-    filter: drop-shadow(0 0 10px var(--pl-lb-accent-glow, rgba(99, 102, 241, 0.45)));
+    color: var(--pl-lb-loader-color, var(--pl-lb-arrow-hover-bg, var(--pl-lb-accent, #6366f1)));
 }
 
-.pl-lightbox-spinner-arrows svg {
-    animation: plLbSpin 0.9s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+.pl-lightbox-loader-wheel svg {
+    animation: plLbSpin 0.85s linear infinite;
+    filter: drop-shadow(0 0 8px var(--pl-lb-loader-glow, var(--pl-lb-accent-glow, rgba(99, 102, 241, 0.5))));
 }
 
-/* Variant 3: Pulsing Dots */
+/* Variant 2: Circle Ring */
+.pl-lightbox-spinner-circle {
+    width: 46px;
+    height: 46px;
+    border: 3.5px solid rgba(255, 255, 255, 0.12);
+    border-top-color: var(--pl-lb-loader-color, var(--pl-lb-arrow-hover-bg, var(--pl-lb-accent, #6366f1)));
+    border-radius: 50%;
+    animation: plLbSpin 0.8s linear infinite;
+    box-sizing: border-box;
+    filter: drop-shadow(0 0 12px var(--pl-lb-loader-glow, var(--pl-lb-accent-glow, rgba(99, 102, 241, 0.5))));
+}
+
+/* Variant 3: Dual Ring (Counter-rotating Orbit) */
+.pl-lightbox-spinner-dual {
+    position: relative;
+    width: 52px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pl-lightbox-spinner-dual::before,
+.pl-lightbox-spinner-dual::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 3.5px solid transparent;
+    border-top-color: var(--pl-lb-loader-color, var(--pl-lb-arrow-hover-bg, var(--pl-lb-accent, #6366f1)));
+    filter: drop-shadow(0 0 10px var(--pl-lb-loader-glow, var(--pl-lb-accent-glow, rgba(99, 102, 241, 0.45))));
+}
+
+.pl-lightbox-spinner-dual::before {
+    animation: plLbSpin 0.9s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+}
+
+.pl-lightbox-spinner-dual::after {
+    inset: 7px;
+    border-top-color: #ffffff;
+    opacity: 0.8;
+    animation: plLbSpinReverse 0.65s linear infinite;
+}
+
+@keyframes plLbSpinReverse {
+    to {
+        transform: rotate(-360deg);
+    }
+}
+
+/* Variant 4: Pulsing Radar Wave */
+.pl-lightbox-spinner-pulse {
+    position: relative;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pl-lightbox-spinner-pulse .pl-pulse-ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 3px solid var(--pl-lb-loader-color, var(--pl-lb-arrow-hover-bg, var(--pl-lb-accent, #6366f1)));
+    animation: plLbRipple 1.4s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+}
+
+.pl-lightbox-spinner-pulse .pl-pulse-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--pl-lb-loader-color, var(--pl-lb-arrow-hover-bg, var(--pl-lb-accent, #6366f1)));
+    box-shadow: 0 0 18px var(--pl-lb-loader-glow, var(--pl-lb-accent-glow, rgba(99, 102, 241, 0.6)));
+    animation: plLbPulseScale 1.4s ease-in-out infinite;
+}
+
+@keyframes plLbRipple {
+    0% {
+        transform: scale(0.4);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1.6);
+        opacity: 0;
+    }
+}
+
+@keyframes plLbPulseScale {
+    0%, 100% {
+        transform: scale(0.85);
+        opacity: 0.7;
+    }
+    50% {
+        transform: scale(1.25);
+        opacity: 1;
+    }
+}
+
+/* Variant 5: Dots Wave */
 .pl-lightbox-spinner-dots {
     display: flex;
     align-items: center;
@@ -273,11 +374,11 @@
 }
 
 .pl-lightbox-spinner-dots span {
-    width: 10px;
-    height: 10px;
+    width: 11px;
+    height: 11px;
     border-radius: 50%;
-    background: var(--pl-lb-accent, #6366f1);
-    box-shadow: 0 0 10px var(--pl-lb-accent-glow, rgba(99, 102, 241, 0.45));
+    background: var(--pl-lb-loader-color, var(--pl-lb-arrow-hover-bg, var(--pl-lb-accent, #6366f1)));
+    box-shadow: 0 0 12px var(--pl-lb-loader-glow, var(--pl-lb-accent-glow, rgba(99, 102, 241, 0.5)));
     animation: plLbPulse 1.2s ease-in-out infinite;
 }
 
@@ -287,6 +388,39 @@
 
 .pl-lightbox-spinner-dots span:nth-child(3) {
     animation-delay: 0.4s;
+}
+
+/* Variant 6: Equalizer Bars */
+.pl-lightbox-spinner-bars {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    height: 36px;
+}
+
+.pl-lightbox-spinner-bars span {
+    width: 5px;
+    height: 100%;
+    border-radius: 3px;
+    background: var(--pl-lb-loader-color, var(--pl-lb-arrow-hover-bg, var(--pl-lb-accent, #6366f1)));
+    box-shadow: 0 0 10px var(--pl-lb-loader-glow, var(--pl-lb-accent-glow, rgba(99, 102, 241, 0.45)));
+    animation: plLbBars 1s ease-in-out infinite;
+}
+
+.pl-lightbox-spinner-bars span:nth-child(1) { animation-delay: 0s; }
+.pl-lightbox-spinner-bars span:nth-child(2) { animation-delay: 0.15s; }
+.pl-lightbox-spinner-bars span:nth-child(3) { animation-delay: 0.3s; }
+.pl-lightbox-spinner-bars span:nth-child(4) { animation-delay: 0.45s; }
+
+@keyframes plLbBars {
+    0%, 100% {
+        transform: scaleY(0.3);
+        opacity: 0.4;
+    }
+    50% {
+        transform: scaleY(1);
+        opacity: 1;
+    }
 }
 
 @keyframes plLbPulse {
