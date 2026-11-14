@@ -58,7 +58,7 @@
         }
 
         loadInitialData() {
-            const dataScript = document.getElementById(`${this.modalId}_data`);
+            const dataScript = document.getElementById(`${this.modalId}_data`) || document.getElementById('initialScreenshotsData');
             if (dataScript && dataScript.textContent.trim()) {
                 try {
                     const parsed = JSON.parse(dataScript.textContent);
@@ -71,6 +71,22 @@
             }
             if (this.titleEl && this.titleEl.textContent.trim()) {
                 this.currentTitle = this.titleEl.textContent.trim();
+            } else {
+                const heroTitle = document.querySelector('.pl-game-hero-title');
+                if (heroTitle) {
+                    this.currentTitle = heroTitle.textContent.trim();
+                    if (this.titleEl) this.titleEl.textContent = this.currentTitle;
+                }
+            }
+
+            // Populate thumbstrip if items present and strip is empty
+            if (this.thumbStrip && this.thumbStrip.children.length === 0 && this.items.length > 0) {
+                this.thumbStrip.innerHTML = this.items.map((item, idx) => `
+                    <img src="${item.thumbnail || item.full}" 
+                         alt="Thumb ${idx + 1}" 
+                         class="pl-lightbox-thumb ${idx === 0 ? 'is-active' : ''}" 
+                         data-index="${idx}">
+                `).join('');
             }
         }
 
@@ -187,6 +203,16 @@
                 }
             }
 
+            // Fallback to initial data if items not yet loaded
+            if (!this.items || this.items.length === 0) {
+                this.loadInitialData();
+            }
+
+            // Fallback to window.currentScreenshots if defined
+            if ((!this.items || this.items.length === 0) && Array.isArray(window.currentScreenshots) && window.currentScreenshots.length > 0) {
+                this.setItems(window.currentScreenshots, window.currentScreenshotsTitle || null);
+            }
+
             if (!this.items || this.items.length === 0) return;
 
             this.modal.style.display = 'flex';
@@ -210,6 +236,16 @@
         }
 
         show(index) {
+            // Fallback to initial data if items not yet loaded
+            if (!this.items || this.items.length === 0) {
+                this.loadInitialData();
+            }
+
+            // Fallback to window.currentScreenshots if defined
+            if ((!this.items || this.items.length === 0) && Array.isArray(window.currentScreenshots) && window.currentScreenshots.length > 0) {
+                this.setItems(window.currentScreenshots, window.currentScreenshotsTitle || null);
+            }
+
             if (!this.items || this.items.length === 0) return;
 
             if (index < 0) {
@@ -233,18 +269,13 @@
 
             if (this.mainImg) {
                 this.mainImg.classList.remove('is-loaded');
-                this.mainImg.style.display = 'none';
-                this.mainImg.style.opacity = '0';
-                this.mainImg.removeAttribute('src');
 
                 if (this.loaderEl) {
                     this.loaderEl.style.display = 'flex';
                 }
 
-                const preloader = new Image();
-                preloader.onload = () => {
+                this.mainImg.onload = () => {
                     if (this.currentIndex !== index) return;
-                    this.mainImg.src = targetUrl;
                     if (this.loaderEl) {
                         this.loaderEl.style.display = 'none';
                     }
@@ -253,29 +284,24 @@
                         this.mainImg.classList.add('is-loaded');
                     });
                 };
-                preloader.onerror = () => {
+
+                this.mainImg.onerror = () => {
                     if (this.currentIndex !== index) return;
                     const fallback = current.thumbnail;
                     if (fallback && fallback !== targetUrl) {
-                        const fbImg = new Image();
-                        fbImg.onload = () => {
-                            if (this.currentIndex !== index) return;
-                            this.mainImg.src = fallback;
-                            if (this.loaderEl) this.loaderEl.style.display = 'none';
-                            this.mainImg.style.display = 'block';
-                            requestAnimationFrame(() => {
-                                this.mainImg.classList.add('is-loaded');
-                            });
-                        };
-                        fbImg.onerror = () => {
-                            if (this.loaderEl) this.loaderEl.style.display = 'none';
-                        };
-                        fbImg.src = fallback;
+                        this.mainImg.src = fallback;
                     } else {
                         if (this.loaderEl) this.loaderEl.style.display = 'none';
                     }
                 };
-                preloader.src = targetUrl;
+
+                this.mainImg.src = targetUrl;
+                this.mainImg.style.display = 'block';
+
+                if (this.mainImg.complete && this.mainImg.naturalWidth > 0) {
+                    if (this.loaderEl) this.loaderEl.style.display = 'none';
+                    this.mainImg.classList.add('is-loaded');
+                }
             }
 
             // Update thumbnail active state
