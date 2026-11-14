@@ -1,0 +1,39 @@
+{
+    "name": "larikmc/yii2-gallery-lightbox",
+    "description": "High-performance zero-dependency Vanilla JS gallery lightbox and fullscreen image viewer for Yii2",
+    "keywords": [
+        "yii2",
+        "lightbox",
+        "gallery",
+        "image-viewer",
+        "touch-swipe",
+        "zero-dependency",
+        "vanilla-js",
+        "fullscreen-viewer",
+        "dark-mode"
+    ],
+    "type": "yii2-extension",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "LarikMC",
+            "email": "larikmc@mail.ru",
+            "homepage": "https://64web.ru"
+        }
+    ],
+    "support": {
+        "source": "https://github.com/larikmc/yii2-gallery-lightbox"
+    },
+    "require": {
+        "php": ">=7.4.0 || >=8.0.0",
+        "yiisoft/yii2": "~2.0.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "larikmc\\lightbox\\": "src/"
+        }
+    },
+    "extra": {
+        "bootstrap": "larikmc\\lightbox\\Bootstrap"
+    }
+}
